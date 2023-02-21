@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 
+const db = require("./db.js");
+
 // creating an express application
 const app = express();
 
@@ -11,6 +13,30 @@ app.get('/', function(req,res) {
     res.json({status: true, 
     message: "Loans Api running successful"
 });
+});
+
+// get all loan applications
+
+app.get('/loans', function(req,res){
+db.serialize(() => {
+    db.all(`SELECT * from loans`,(error,rows) => {
+        if(error) {
+            res.json({
+                status: false,
+                error: error
+            })
+        } else {
+            res.json({
+                status: true,
+                loans: rows
+            })
+        }
+
+    })
+})
+
+
+    
 });
 
 //Post Api for new loan application
