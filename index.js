@@ -20,6 +20,8 @@ app.get('/', function(req,res) {
 app.get('/loans', function(req,res){
     
 db.serialize(() => {
+    //const selectQuery = `SELECT loan_id,firstname, lastname,loan_amount,
+    //Purpose,status  from loans`
     const selectQuery = `SELECT * from loans`
     db.all(selectQuery,(error,rows) => {
         if(error) {
@@ -28,18 +30,36 @@ db.serialize(() => {
                 error: error
             })
         } else {
+
+            // 3 types of method any one use
+            
+            for(let i=0; i < rows.length; i++) {
+            delete rows[i].email;
+            }
+
+            let index=0;
+            while(index < rows.length) {
+                delete rows[index].purpose;
+                index++;
+            }
+
+            rows.forEach(singleRow => {
+                delete singleRow.lastname;
+            })
+
+            }
             res.json({
                 status: true,
                 loans: rows
             })
-        }
+        })
 
     })
 })
 
 
     
-});
+
 
 //Post Api for new loan application
 app.post('/new-loan', function(req,res) {
@@ -137,8 +157,8 @@ app.get('/loans/:id' , function(req,res) {
 
    const sql =  `SELECT * from loans WHERE loan_id = ${loan_id};`;
    db.serialize(() => {
-    db.get(sql,(err,row) => {
-        if (err || !row) {
+    db.get(sql,(error,row) => {
+        if (error || !row) {
             res
             .status(400)
             .json({
@@ -179,15 +199,36 @@ app.post('/loans/:id', function (req,res) {
                 })
             }
         })
+    });
+
+app.delete("/loans/:loanId", (req, res) => {
+    const loan_id = req.params.loanId;
+    const sql = `DELETE from loans WHERE loan_id=${loan_id}`;
+
+    db.serialize(() => {
+        db.exec(sql, (error) => {
+            if(error) {
+                return sendErrorResponse(res, "Can't delete the loan")
+            } else {
+                res.json({
+                    status: true,
+                    message: "Loan deleted...."
+                })
+            }
+        })
     })
-
-
-res.json({
-    status: true,
-loan_id: loan_id,
-loan_status: status
 })
+
 })
+
+function sendErrorResponse(response,errorMessage) {
+        return response.status(400).json({
+            status: false,
+            error: errorMessage
+        });
+    }
+});
+
 app.listen(3000, function() {
 console.log(`API Services are running on http://localhost:3000`);
 })
